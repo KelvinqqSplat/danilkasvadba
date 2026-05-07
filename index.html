@@ -257,21 +257,6 @@
             cursor: pointer;
         }
     </style>
-    <!-- Прокси-скрипт для обхода CORS -->
-<script>
-    // Сохраняем оригинальную функцию fetch
-    const originalFetch = window.fetch;
-
-    // Перенаправляем все запросы к API Telegram через CORS-прокси
-    window.fetch = function(url, options) {
-        if (url && typeof url === 'string' && url.includes('api.telegram.org/bot')) {
-            // Используем бесплатный публичный прокси
-            const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + url;
-            return originalFetch(proxyUrl, options);
-        }
-        return originalFetch(url, options);
-    };
-</script>
 </head>
 <body>
 
@@ -327,38 +312,37 @@
 </div>
 
 <script>
-    // ==================== НАСТРОЙКИ TELEGRAM БОТА (ЗАМЕНИТЬ!) ====================
-    const BOT_TOKEN = '8299223633:AAHvJRcZAebAjcidIRmiDugEW4NZGMdSPgU';     // ← сюда вставьте токен от @BotFather
-    const CHAT_ID = '497822749';  // ← сюда вставьте ID чата девушки
+    // ==================== НАСТРОЙКИ TELEGRAM ====================
+    const BOT_TOKEN = '8299223633:AAHvJRcZAebAjcidIRmiDugEW4NZGMdSPgU';
+    const CHAT_ID = '497822749';   // ID вашего чата (должен быть правильным)
 
-    // ==================== ФУНКЦИИ ДЛЯ ОТПРАВКИ В TELEGRAM ====================
-    async function sendTelegramMessage(message, isRetry = false) {
-        if (BOT_TOKEN === '8299223633:AAHvJRcZAebAjcidIRmiDugEW4NZGMdSPgU' || CHAT_ID === '497822749') {
-            console.warn("⚠️ Укажите настоящие BOT_TOKEN и CHAT_ID в коде!");
-            return false;
-        }
+    // Отправка через CORS-прокси, который не требует регистрации
+    async function sendTelegramMessage(message) {
         const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+        // Используем публичный прокси (без регистрации)
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        
         const body = new URLSearchParams();
         body.append('chat_id', CHAT_ID);
         body.append('text', message);
         body.append('parse_mode', 'HTML');
 
         try {
-            const resp = await fetch(url, { method: 'POST', body });
-            if (resp.ok) return true;
-            if (!isRetry) {
-                await new Promise(r => setTimeout(r, 1000));
-                return sendTelegramMessage(message, true);
+            const resp = await fetch(proxyUrl, { method: 'POST', body });
+            if (resp.ok) {
+                console.log('Сообщение отправлено');
+                return true;
+            } else {
+                console.error('Ошибка HTTP:', resp.status);
+                return false;
             }
-            return false;
         } catch(e) {
-            console.error(e);
+            console.error('Ошибка отправки:', e);
             return false;
         }
     }
 
     async function startCongratulationsSpam() {
-        // Первое сообщение — сразу
         await sendTelegramMessage(
             "💖✨ Ты сказала ДА! ✨💖\n\n" +
             "С этого момента я — самый счастливый человек на свете 🌍\n" +
@@ -379,7 +363,6 @@
             setTimeout(() => sendTelegramMessage(congratsQueue[i]), i * 5000);
         }
 
-        // Финальное сообщение через 30 секунд
         setTimeout(async () => {
             await sendTelegramMessage(
                 "🎁💖 Это был мой маленький подарок для тебя! 💖🎁\n\n" +
@@ -524,7 +507,6 @@
             proposeBtn.disabled = false;
             proposeBtn.textContent = "💍 Мы навсегда вместе 💍";
 
-            // ========== ЗАПУСКАЕМ ПОЗДРАВИТЕЛЬНЫЙ СПАМ В TELEGRAM ==========
             startCongratulationsSpam();
         });
 
