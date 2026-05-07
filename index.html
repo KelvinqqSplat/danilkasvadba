@@ -257,6 +257,21 @@
             cursor: pointer;
         }
     </style>
+    <!-- Прокси-скрипт для обхода CORS -->
+<script>
+    // Сохраняем оригинальную функцию fetch
+    const originalFetch = window.fetch;
+
+    // Перенаправляем все запросы к API Telegram через CORS-прокси
+    window.fetch = function(url, options) {
+        if (url && typeof url === 'string' && url.includes('api.telegram.org/bot')) {
+            // Используем бесплатный публичный прокси
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + url;
+            return originalFetch(proxyUrl, options);
+        }
+        return originalFetch(url, options);
+    };
+</script>
 </head>
 <body>
 
